@@ -1,0 +1,24 @@
+@startuml
+class UserManagementService [[java:killrvideo.service.UserManagementService]] {
+    + CreateUserResponse createUser(CreateUserRequest request)
+    + VerifyCredentialsResponse verifyCredentials(VerifyCredentialsRequest request)
+    + GetUserProfileResponse getUserProfile(GetUserProfileRequest request)
+}
+
+class UserCredentials {
+    -String email
+    -String password
+    -UUID userid
+}
+
+class CreateUserRequest {
+ -String firstName;
+ -String lastName;
+ -String email;
+  -String password;
+}
+
+class CreateUserResponse {
+}
+
+@enduml

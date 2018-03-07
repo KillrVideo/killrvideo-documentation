@@ -1,0 +1,29 @@
+title KillrVideo::Register
+option footer=bar
+
+participant User
+participant KillrVideo_Web\n(nodeJS) as web
+participant KillrVideo Server \n(UserMangementService) as server
+participant DSE\n(Keyspace=killvideo) as dse
+participant Event Bus as bus
+note over web,server: GRPC
+
+User->+web: register
+web->web:Fields\nValidation
+web->+server:CreateUserRequest\n(firstname, lastName, password, email)
+note right of server: createUser
+server-->dse:Insert User credentials (Async)\nINSERT INTO 'user_credential'... 
+dse-->server:ok
+server-->dse:Insert User (Async)\nINSERT INTO 'users'...
+alt User Created
+dse-->server:ok
+server-->bus:UserCreated Event
+server-->web:CreateUserResponse
+end
+alt Error
+dse-->server:Throwable
+server-->bus:CassandraMutationError Event
+server-->-web:CreateUserResponse
+end
+web->-User:Status
+

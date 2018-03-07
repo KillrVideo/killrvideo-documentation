@@ -1,0 +1,36 @@
+title Sign In
+option footer=bar
+
+participant User
+participant KillrVideo_Web\n(nodeJS) as web
+participant KillrVideo Server \n(UserMangementService) as server
+participant DSE\n(Keyspace=killvideo) as dse
+participant Event Bus as bus
+note over web,server: GRPC
+
+User->+web: login
+web->web:Fields\nValidation
+web->+server:VerifyCredentialsRequest\n(password, email)
+note right of server: VerifyCredentials
+server-->dse:Select credentials with partition key (Async) \nSELECT * FROM 'user_credentials' WHERE email =?
+dse-->server:Resulset
+server->server:validate Hashed password\n(if retrieved)
+alt Invalid Credentials
+  server-->web:INVALID ARGUMENT
+  web-->User:Error in WebUI
+end
+alt Valid Credentials
+ server-->-web:COMPLETED
+ web->+server:UserProfileRequest\n(List<userId>)
+ note right of server: GetUserProfile
+ server-->dse:Select user with partition key (Async) \nSELECT * FROM 'users' WHERE uuid =?
+ dse-->server:Resulset
+ alt ERROR
+  server-->web:INVALID INTERNAL_ERROR
+  web-->User:Error in WebUI
+ end
+ alt OK
+  server-->-web:UserProfileResponse\n(List<Users>)
+  web-->-web:Route to Account Info
+ end
+end
